@@ -1,5 +1,8 @@
 version: '3.1'
-
+#
+#  Expects in /etc/hosts
+#   swarm.io  manager_ip
+#
 networks:
   traefik-net:
     external: true
@@ -10,6 +13,7 @@ services:
   requestor:
     image: xybersolve/zmq-http-req:latest
     command: npm start
+    # not needed with trafik endpoint
     #ports:
     #  - "8686:8686"
     environment:
@@ -22,19 +26,26 @@ services:
       replicas: 2
       placement:
         constraints: [node.role == worker]
+      update_config:
+        parallelism: 1
+        delay: 2s
+      restart_policy:
+        condition: on-failure
       labels:
       - traefik.domain=swarm.io
-      - traefik.frontend.rule=PathPrefix:/ping,/reflect,/increment
+      #- traefik.frontend.rule=PathPrefix:/api/ping,/api/reflect,/api/increment
+      - traefik.frontend.rule=PathPrefixStrip:/api/v1
       - traefik.entryPoints=http
       - traefik.backend=requestor
       - traefik.docker.network=traefik-net
       - traefik.port=8686
       - traefik.enable=true
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://swarm.io/ping"]
-      interval: 1m
-      timeout: 5s
-      retries: 3
+    # inconsistent acceptance of '/v1' portion of endpoint
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://swarm.io/api/v1/ping"]
+    #   interval: 1m
+    #   timeout: 5s
+    #   retries: 3
 
   responder:
     image: xybersolve/zmq-http-res:latest
@@ -45,6 +56,11 @@ services:
     networks:
     - zmq-net
     deploy:
-      replicas: 1
+      replicas: 2
       placement:
         constraints: [node.role == worker]
+      update_config:
+        parallelism: 1
+        delay: 2s
+      restart_policy:
+        condition: on-failure

@@ -1,6 +1,7 @@
 .PHONY: up down \
 	traefik-up portainer-up nginx-up apache-up zmq-up \
 	traefik-down portainer-down nginx-down apache-down zmq-down \
+	zmq-ping zmq-reflect zmq-inc \
 	help
 
 TRAEFIK_NETWORK := traefik-net
@@ -47,8 +48,21 @@ zmq-up: zmq-down network-up ## bring up zmq microservices
 	@docker stack deploy zmq -c zmq.yaml
 
 zmq-down: ## tear down zmq microservices
-	@docker stack rm requestor || true
-	@docker stack rm responder || true
+	@docker stack rm zmq
+
+zmq-clean: ## zmq: lower level service removal
+	@docker service rm zmq_requestor || true
+	@docker service rm zmq_responder || true
+
+zmq-reflect: ## ex: make zmq-reflect
+	@curl swarm.io/api/v1/reflect
+
+zmq-ping: ## ex: make zmq-ping
+	@curl swarm.io/api/v1/ping
+
+zmq-inc: ## ex: make zmq-inc number=25
+	@curl swarm.io/api/v1/increment/$(number)
+
 
 up: traefik-up portainer-up nginx-up apache-up ## bring up all services
 

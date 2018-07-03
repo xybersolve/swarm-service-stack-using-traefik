@@ -8,12 +8,29 @@ Traefik proxy for Microservice & REST routing.
 Get IP address using `$(docker-machine ip ${swarm_leader})`.
 
 ```sh
- $ vim /etc/hosts
 
- 192.168.99.100   swarm.io
+  ./update-hosts <ip-address>
+
+
+  # or manually
+  $ vim /etc/hosts
+
+  192.168.99.100   swarm.io
 
 ```
 
+### ZMQ - API Versioning (/api/v1)
+```sh
+
+  # service uses intra-communication call to 0MQ (ZeroMQ) microservice socket
+  $ curl swarm.io/api/v1/ping
+  $ curl swarm.io/api/v1/increment/128
+
+  # return basic container information for load balancing
+  $ curl swarm.io/api/v1/reflect
+
+
+```
 ## Makefile
 
 ```sh
@@ -31,6 +48,9 @@ traefik-down         tear down traefik proxy service
 traefik-up           bring up traefik proxy service
 zmq-down             tear down zmq microservices
 zmq-up               bring up zmq microservices
+zmq-inc              ex: make zmq-inc number=25
+zmq-ping             ex: make zmq-ping
+zmq-reflect          ex: make zmq-reflect
 up                   bring up all services
 down                 tear down all services
 
