@@ -1,0 +1,18 @@
+version: '3.3'
+
+networks:
+  traefik-net:
+    external: true
+
+services:
+  apache:
+    image: httpd:2.4
+    networks:
+    - traefik-net
+    deploy:
+      replicas: 2
+      labels:
+      - traefik.frontend.rule=PathPrefixStrip:/apache
+      - traefik.docker.network=traefik-net
+      - traefik.port=80
+      - traefik.enable=true

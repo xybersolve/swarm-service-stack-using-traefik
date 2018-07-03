@@ -1,0 +1,65 @@
+version: '3.1'
+
+networks:
+  traefik-net:
+    external: true
+
+volumes:
+  portainer-data:
+    external: true
+
+# portainer:1.18.1
+services:
+  portainer:
+    image: portainer/portainer
+    command:
+      - -H unix:///var/run/docker.sock
+    networks:
+      - traefik-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role==manager]
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.33'
+          memory: 20M
+        reservations:
+          cpus: '0.05'
+          memory: 10M
+      labels:
+      - traefik.frontend.rule=PathPrefixStrip:/portainer
+      - traefik.docker.network=traefik-net
+      - traefik.port=9000
+      - traefik.enable=true
+      - traefik.frontend.passHostHeader=true
+      - "traefik.frontend.entryPoints=http"
+
+
+  # docker volume create portainer_data || true
+  #
+  # docker service create \
+  # --name portainer \
+  # --publish 9000:9000 \
+  # --replicas=1 \
+  # --constraint 'node.role == manager' \
+  # --mount type=bind,src=//var/run/docker.sock,dst=/var/run/docker.sock \
+  # --mount type=volume,src=portainer_data,dst=/data \
+  # portainer/portainer \
+  #   -H unix:///var/run/docker.sock
+
+        # - "traefik.backend=portainer"
+        # - "traefik.frontend.rule=PathPrefixStrip:/portainer"
+        # - "traefik.port=9000"
+        # - "traefik.enable=true"
+        # - "traefik.frontend.entryPoints=http"
+        # - "traefik.docker.network=traefik-net"
+        # - "traefik.weight=10"
+        # - "traefik.frontend.passHostHeader=true"
